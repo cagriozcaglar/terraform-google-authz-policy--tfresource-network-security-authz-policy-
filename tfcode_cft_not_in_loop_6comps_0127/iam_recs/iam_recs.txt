@@ -1,0 +1,46 @@
+{
+  "resourceRoles": [
+    {
+      "resourceName": "projects/gcp-project",
+      "roles": [
+        {
+          "name": "roles/iam.infrastructureAdmin",
+          "permissions": [
+            "serviceusage.services.enable",
+            "networksecurity.operations.get",
+            "networksecurity.authorizationPolicies.create",
+            "networksecurity.authorizationPolicies.get",
+            "networksecurity.authorizationPolicies.delete",
+            "serviceusage.services.get"
+          ]
+        },
+        {
+          "name": "roles/serviceusage.serviceUsageAdmin",
+          "permissions": [
+            "serviceusage.services.get",
+            "serviceusage.services.disable",
+            "serviceusage.services.enable",
+            "serviceusage.services.use"
+          ]
+        },
+        {
+          "name": "roles/iam.serviceAccountUser",
+          "permissions": [
+            "iam.serviceAccounts.actAs"
+          ]
+        }
+      ]
+    }
+  ],
+  "[cloud_iam.policy_ai.iampolicyai.IacRolesAdditionalInfo.additional_info]": {
+    "resourceInfos": [
+      {
+        "resourceName": "projects/gcp-project",
+        "createResourceTypes": [
+          "google_network_security_authorization_policy",
+          "google_project_service"
+        ]
+      }
+    ]
+  }
+}

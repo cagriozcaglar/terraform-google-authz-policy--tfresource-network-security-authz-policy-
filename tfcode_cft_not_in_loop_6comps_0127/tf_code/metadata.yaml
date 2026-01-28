@@ -1,0 +1,145 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# TF Blueprint Metadata standard:
+# https://docs.google.com/document/d/1uMhNixV5RsH3s21pniLZpQDkSLS2cABh2lo1fkq2hMY/edit
+apiVersion: blueprints.cloud.google.com/v1alpha1
+kind: BlueprintMetadata
+metadata:
+  name: terraform-google-network-security-authorization-policy
+  annotations:
+    config.kubernetes.io/local-config: "true"
+spec:
+  info:
+    title: Network Security Authorization Policy
+    source:
+      repo: https://github.com/GoogleCloudPlatform/terraform-google-network-security-authorization-policy
+      source_type: git
+    version: 0.1.0
+    actuationTool:
+      type: Terraform
+      versions: [">= 1.3.0"]
+    description:
+      tagline: Creates and manages a Google Cloud Network Security Authorization Policy.
+      detailed: This module allows for the creation and management of a Google Cloud Network Security Authorization Policy. This policy defines a set of rules that control access to network resources based on identity and other attributes.
+      preDeploy: To deploy this blueprint you must have an active billing account and billing permissions.
+    icon: "" # Path to an icon representing the blueprint.
+    diagrams: [] # List of visualization diagrams.
+    documentations: [] # Links to official documentation.
+    examples: [] # List of examples for using the blueprint.
+  interfaces:
+    variables:
+      - name: action
+        description: "The action to take when a rule match is found. Possible values are 'ALLOW' or 'DENY'."
+        varType: string
+        defaultValue: "ALLOW"
+        required: true
+      - name: description
+        description: A free-text description of the Authorization Policy.
+        varType: string
+        defaultValue: null
+        required: false
+      - name: labels
+        description: A map of labels to attach to the Authorization Policy.
+        varType: map(string)
+        defaultValue: {}
+        required: false
+      - name: location
+        description: "The location of the authorization policy. Can be 'global' or a region."
+        varType: string
+        defaultValue: "global"
+        required: true
+      - name: name
+        description: The name of the Authorization Policy. If not provided, a random name will be generated.
+        varType: string
+        defaultValue: null
+        required: false
+      - name: project_id
+        description: The project ID in which the Authorization Policy will be created. If not provided, the provider project is used.
+        varType: string
+        defaultValue: null
+        required: false
+      - name: rules
+        description: |
+          A list of rules that match traffic. A rule consists of a list of sources and a list of destinations.
+          If a traffic is matched by multiple rules, the first matched rule will be enforced.
+          If no rule is matched, the default action is enforced.
+          Each rule object can have the following attributes:
+          - `sources`: (Optional) A list of source specifications. A source specifies a list of identities or a list of IP blocks. Max 1 item.
+            - `principals`: (Optional) A list of peer identities to match for authorization.
+            - `ip_blocks`: (Optional) A list of CIDR ranges to match for authorization.
+          - `destinations`: (Optional) A list of destination specifications. A destination specifies a list of hosts, ports, methods, and a header matcher. Max 1 item.
+            - `hosts`: (Required) A list of host names or FQDNs.
+            - `ports`: (Required) A list of destination ports to match.
+            - `methods`: (Optional) A list of HTTP methods to match.
+            - `http_header_match`: (Optional) A HTTP header matcher. Max 1 item.
+              - `header_name`: (Required) The name of the HTTP header to match.
+              - `regex_match`: (Required) The value of the header must match the regular expression.
+        varType: |-
+          list(object({
+              sources = optional(list(object({
+                principals = optional(list(string), [])
+                ip_blocks  = optional(list(string), [])
+              })), [])
+              destinations = optional(list(object({
+                hosts             = list(string)
+                ports             = list(number)
+                methods           = optional(list(string), [])
+                http_header_match = optional(list(object({
+                  header_name = string
+                  regex_match = string
+                })), [])
+              })), [])
+            }))
+        defaultValue: []
+        required: true
+    variableGroups:
+      - name: "Authorization Policy Configuration"
+        description: "Basic settings for the authorization policy."
+        variables:
+          - project_id
+          - name
+          - location
+          - description
+          - labels
+      - name: "Policy Rules"
+        description: "Define the rules and default action for the policy."
+        variables:
+          - action
+          - rules
+    outputs:
+      - name: create_time
+        description: The timestamp when the authorization policy was created.
+      - name: id
+        description: The canonical ID of the authorization policy, in the format `projects/{project}/locations/{location}/authorizationPolicies/{name}`.
+      - name: name
+        description: The name of the authorization policy.
+      - name: update_time
+        description: The timestamp when the authorization policy was last updated.
+  requirements:
+    roles:
+      - level: project
+        role: roles/networksecurity.admin
+      - level: project
+        role: roles/serviceusage.serviceUsageAdmin
+    services:
+      - networksecurity.googleapis.com
+requirements:
+  roles:
+    - level: project
+      role: roles/iam.infrastructureAdmin
+    - level: project
+      role: roles/serviceusage.serviceUsageAdmin
+    - level: project
+      role: roles/iam.serviceAccountUser
